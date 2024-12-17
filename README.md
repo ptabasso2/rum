@@ -115,14 +115,14 @@ node-server/
    cd rum/node-server
    ```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Copy the Vue.js `dist` folder:
+2. Copy the Vue.js `dist` folder:
    ```bash
    cp -r ../vue-frontend/dist ./dist
+   ```
+
+3. Install dependencies:
+   ```bash
+   npm install
    ```
 
 4. Start the server:
