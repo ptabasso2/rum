@@ -11,10 +11,21 @@ This guide provides detailed instructions to set up a full-stack project with:
 
 ### **1.1 Install Node.js and npm**
 - **For Linux**:
-   ```bash
-   curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-   apt-get install -y nodejs
-   ```
+```bash
+#installs nvm (Node Version Manager)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+
+#download and install Node.js (you may need to restart the terminal)
+nvm install 22
+
+#verifies the right Node.js version is in the environment
+node -v # should print `v22.12.0`
+
+#verifies the right npm version is in the environment
+npm -v # should print `10.9.0`
+```
+
+
 - **For macOS** (via Homebrew):
    ```bash
    brew install node
