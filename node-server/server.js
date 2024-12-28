@@ -5,8 +5,10 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-// Backend API base URL
-const BACKEND_API = 'http://localhost:8080';
+// Determine the backend API base URL
+const BACKEND_API = process.env.BACKEND_API || 'http://localhost:8080'; // Default to localhost for local dev
+
+console.log(`Backend API URL: ${BACKEND_API}`);
 
 // Proxy API requests to Spring Boot
 app.use('/api', async (req, res) => {
