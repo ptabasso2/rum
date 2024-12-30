@@ -18,9 +18,9 @@ export default {
         async fetchData() {
             try {
               // Base URL to connect to Spring Boot Backend
-              const baseURL =
-                  process.env.VUE_APP_API_URL || 'http://localhost:8080';
-                const response = await axios.get(`${baseURL}/api/data`);
+                //const baseURL = process.env.VUE_APP_API_URL || 'http://localhost:8080';
+                //const response = await axios.get(`${baseURL}/api/data`);
+                const response = await axios.get('/api/data');
                 this.message = response.data.message;
             } catch (error) {
                 this.message = 'Error fetching data';

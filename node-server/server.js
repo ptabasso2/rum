@@ -1,3 +1,11 @@
+// Import and initialize the Datadog tracer
+const tracer = require('dd-trace').init({
+    service: 'node-server',        // The service name for Datadog APM
+    env: process.env.NODE_ENV || 'dev', // Environment (e.g., development, production)
+    version: '1.2',              // Application version
+    logInjection: true,            // Inject trace IDs into logs
+});
+
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
