@@ -1,13 +1,42 @@
 version: '3.8'
 
 services:
+  dd-agent:
+    container_name: dd-agent
+    image: gcr.io/datadoghq/agent:latest-jmx
+    environment:
+      - DD_HOSTNAME=datadog
+      - DD_API_KEY
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_PROCESS_AGENT_ENABLED=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC="true"
+      - DD_LOG_LEVEL=debug
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_CONTAINER_EXCLUDE_LOGS="name:datadog-agent"
+      - SD_JMX_ENABLE=true
+    ports:
+      - "8125:8125"
+      - "8126:8126"
+    volumes:
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - app
+
   spring-backend:
     build:
       context: .
       dockerfile: spring-backend/Dockerfile
     container_name: spring-backend
+    environment:
+      - JAVA_TOOL_OPTIONS=-javaagent:/root/dd-java-agent.jar -Ddd.agent.host=dd-agent -Ddd.service=springbackend -Ddd.env=dev -Ddd.version=1.2 -Ddd.trace.sample.rate=1 -Ddd.logs.injection=true -Ddd.profiling.enabled=true -XX:FlightRecorderOptions=stackdepth=256 -Ddd.tags=env:dev
     ports:
       - "8080:8080"
+    volumes:
+      - ./spring-backend/dd-java-agent.jar:/root/dd-java-agent.jar
     networks:
       - app
 
@@ -15,8 +44,6 @@ services:
     build:
       context: .
       dockerfile: node-server/Dockerfile
-      args:
-        VUE_APP_API_URL: http://spring-backend:8080
     container_name: node-server
     ports:
       - "3000:3000"
@@ -24,7 +51,7 @@ services:
       - spring-backend
     environment:
       - BACKEND_API=http://spring-backend:8080
-      - VUE_APP_API_URL=http://spring-backend:8080
+      - DD_AGENT_HOST=dd-agent
     networks:
       - app
 

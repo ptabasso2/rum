@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "VUE_APP_API_URL=${VUE_APP_API_URL:-http://localhost:8080} vue-cli-service build"
+    "build": "vue-cli-service build"
   },
   "dependencies": {
     "axios": "^1.5.0",
