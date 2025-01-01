@@ -14,7 +14,7 @@ COPY vue-frontend/ ./vue-frontend/
 ARG VUE_APP_API_URL
 
 # Build Vue.js static files with the environment variable
-RUN cd vue-frontend && VUE_APP_API_URL=$VUE_APP_API_URL npm run build
+RUN cd vue-frontend && npm run build
 
 # Stage 2: Set up the Node.js server
 FROM node:22

@@ -15,8 +15,6 @@ services:
     build:
       context: .
       dockerfile: node-server/Dockerfile
-      args:
-        VUE_APP_API_URL: http://spring-backend:8080
     container_name: node-server
     ports:
       - "3000:3000"
@@ -24,7 +22,6 @@ services:
       - spring-backend
     environment:
       - BACKEND_API=http://spring-backend:8080
-      - VUE_APP_API_URL=http://spring-backend:8080
     networks:
       - app
 
