@@ -1,276 +1,324 @@
 
-# Full stack project: Vue.js Frontend, Node.js Server, and Spring Boot Backend
+# Full-Stack Application Instrumentation with Datadog RUM and APM
 
-This guide provides detailed instructions to set up a full-stack project with:
-- **Vue.js** frontend served using a **Node.js** server.
-- **Spring Boot** backend providing the API.
+This document describes how to instrument a full-stack web application using Datadog's Real User Monitoring (RUM) and Application Performance Monitoring (APM). The setup includes changes for Vue.js frontend, Node.js server, and Spring Boot backend. Instructions are provided for both local and Dockerized environments.
 
 ---
 
-## **1. Prerequisites**
+## **Instrumentation for Local Development**
 
-### **1.1 Install Node.js and npm**
-- **For Linux**:
+### **1. Vue.js Frontend**
+
+#### **File: `vue-frontend/public/index.html`**
+Add the Datadog RUM SDK using the **synchronous CDN method**:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Vue App</title>
+    <script
+        src="https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js"
+        type="text/javascript">
+    </script>
+    <script>
+        window.DD_RUM && window.DD_RUM.init({
+            clientToken: 'pub392166f801e49db7d54982758474bb51',
+            applicationId: 'cbaf4743-a33e-4a25-b37b-23b11973c85b',
+            site: 'datadoghq.com',
+            service: 'rumsdk',
+            env: 'dev',
+            allowedTracingUrls: ["http://localhost:3000"],
+            sessionSampleRate: 100,
+            sessionReplaySampleRate: 20,
+            trackUserInteractions: true,
+            trackResources: true,
+            trackLongTasks: true,
+            defaultPrivacyLevel: 'allow',
+        });
+    </script>
+</head>
+<body>
+    <div id="app"></div>
+</body>
+</html>
+```
+
+Rebuild the frontend:
 ```bash
-#installs nvm (Node Version Manager)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-
-#download and install Node.js (you may need to restart the terminal)
-nvm install 22
-
-#verifies the right Node.js version is in the environment
-node -v # should print `v22.12.0`
-
-#verifies the right npm version is in the environment
-npm -v # should print `10.9.0`
-```
-
-
-- **For macOS** (via Homebrew):
-   ```bash
-   brew install node
-   ```
-- **For Windows**:
-   - Download the installer from [https://nodejs.org/](https://nodejs.org/) and follow the setup wizard.
-
-Verify installation:
-```bash
-node -v
-npm -v
+cd vue-frontend
+npm run build
+cp -r dist ../node-server/dist
+cd ../node-server
 ```
 
 ---
 
-### **1.2 Install Vue CLI**
-Install Vue CLI globally to set up Vue.js projects:
-```bash
-npm install -g @vue/cli
-```
-Verify the installation:
-```bash
-vue --version
-```
+### **2. Node.js Server**
 
----
+#### **File: `node-server/package.json`**
+Add the `dd-trace` dependency to enable Datadog APM:
 
-## **2. Project Structure**
-
-The final directory structure will look like this:
-
-```
-rum/
-├── vue-frontend/        # Vue.js Frontend
-├── node-server/         # Node.js Server to serve Vue.js and proxy requests
-└── spring-backend/      # Spring Boot Backend
+```json
+{
+  "name": "node-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dd-trace": "^5.30.0",
+    "express": "^4.18.2"
+  }
+}
 ```
 
----
-
-## **3. Vue.js Frontend Setup**
-
-### **Directory Structure**
-```
-vue-frontend/
-├── dist/                     # Production build folder
-├── node_modules/
-├── package.json
-├── public/
-│   └── index.html
-└── src/
-    ├── App.vue
-    ├── components/
-    │   └── HelloWorld.vue
-    └── main.js
-```
-
-### **Steps to Set Up Vue.js Frontend**
-1. Navigate to the `vue-frontend` directory:
-   ```bash
-   cd rum/vue-frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Run the development server (optional):
-   ```bash
-   npm run serve
-   ```
-
-4. Build the production files:
-   ```bash
-   npm run build
-   ```
-
-The build output will be in the `dist/` folder.
-
----
-
-## **4. Node.js Server Setup**
-
-### **Directory Structure**
-```
-node-server/
-├── dist/                    # Copy Vue.js build output here
-├── node_modules/
-├── package.json
-├── package-lock.json
-└── server.js
-```
-
-### **Steps to Set Up Node.js Server**
-1. Navigate to the `node-server` directory:
-   ```bash
-   cd rum/node-server
-   ```
-
-2. Copy the Vue.js `dist` folder:
-   ```bash
-   cp -r ../vue-frontend/dist ./dist
-   ```
-
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-4. Start the server:
-   ```bash
-   npm start
-   ```
-
-5. Verify the server is running:
-   - Open `http://localhost:3000` to see the Vue.js app.
-   - The `/api/data` endpoint proxies requests to the Spring Boot backend.
-
----
-
-## **5. Spring Boot Backend Setup**
-
-### **Directory Structure**
-```
-spring-backend/
-├── build.gradle.kts
-├── settings.gradle.kts
-└── src/
-    ├── main/
-    │   ├── java/com/datadoghq/pej/springbackend/
-    │   │   ├── BackendApplication.java
-    │   │   ├── controller/ApiController.java
-    │   │   └── model/ApiResponse.java
-    │   └── resources/
-    │       └── application.properties
-```
-
-### **Steps to Set Up Spring Boot Backend**
-
-1. Navigate to the `spring-backend` directory:
-   ```bash
-   cd rum/spring-backend
-   ```
-
-2. Build the fat JAR:
-   ```bash
-   ./gradlew bootJar
-   ```
-
-3. Run the application:
-   ```bash
-   java -jar build/libs/spring-backend.jar
-   ```
-
-4. Verify the backend:
-   - Open `http://localhost:8080/api/data` to ensure the API returns:
-     ```json
-     {"message": "Hello from Spring Boot API!"}
-     ```
-
----
-
-## **6. Testing the Complete Setup**
-
-1. **Start Spring Boot Backend**:
-   - Run the backend JAR:
-     ```bash
-     java -jar build/libs/spring-backend.jar
-     ```
-
-2. **Start Node.js Server**:
-   - Start the Node.js service:
-     ```bash
-     npm start
-     ```
-
-3. **Verify the Vue.js Frontend**:
-   - Open `http://localhost:3000` in the browser to see the Vue.js app.
-
-4. **Test the API Proxy**:
-   - Click the "Fetch Data" button on the Vue.js app.
-   - Verify that the data is fetched from the Spring Boot backend and displayed:
-     ```
-     Hello from Spring Boot API!
-     ```
-
-5. **Verify with `curl`**:
-   Run the following command to hit the Node.js service:
-   ```bash
-   curl http://localhost:3000/api/data
-   ```
-   You should get:
-   ```json
-   {"message": "Hello from Spring Boot API!"}
-   ```
-
----
-
-## **7. Common Issues and Fixes**
-
-### **1. Missing Modules (e.g., `axios` or `express`)**
-If you encounter errors like:
-```
-Error: Cannot find module 'axios'
-```
-Run the following command in the respective directory:
-```bash
-npm install axios
-```
-This ensures `axios` is installed locally even if it is already in the `package.json`.
-
-### **2. Missing `node_modules`**
-If the `node_modules` directory is missing:
+Install dependencies:
 ```bash
 npm install
 ```
 
-### **3. Port Conflicts**
-If any service fails to start because of port conflicts:
-- **Spring Boot**: Change the port in `application.properties`:
-   ```properties
-   server.port=8081
-   ```
-- **Node.js**: Change the port in `server.js`:
-   ```javascript
-   const PORT = 3001;
-   ```
+#### **File: `node-server/server.js`**
+Initialize Datadog Tracing in the Node.js server:
+
+```javascript
+const tracer = require('dd-trace').init({
+    service: 'node-server',
+    env: process.env.NODE_ENV || 'dev',
+    hostname: process.env.DD_AGENT_HOST || 'localhost',
+    version: '1.2',
+    logInjection: true,
+});
+
+const express = require('express');
+const axios = require('axios');
+const path = require('path');
+
+const app = express();
+const PORT = 3000;
+
+// Determine the backend API base URL
+const BACKEND_API = process.env.BACKEND_API || 'http://localhost:8080';
+console.log(`Backend API URL: ${BACKEND_API}`);
+
+// Proxy API requests to Spring Boot
+app.use('/api', async (req, res) => {
+    try {
+        const response = await axios({
+            method: req.method,
+            url: `${BACKEND_API}${req.originalUrl}`,
+            data: req.body,
+            headers: req.headers,
+        });
+        res.status(response.status).send(response.data);
+    } catch (error) {
+        console.error('Error while proxying request:', error.message);
+        res.status(error.response ? error.response.status : 500).send(error.message);
+    }
+});
+
+// Serve Vue.js static files
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Handle SPA routing
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`Node.js server is running at http://localhost:${PORT}`);
+});
+```
 
 ---
 
-## **8. Summary of Commands**
+### **3. Spring Boot Backend**
 
-### **Vue.js Frontend**:
-- Install: `npm install`
-- Build: `npm run build`
-- Serve Dev: `npm run serve`
+#### **File: `spring-backend/src/main/java/com/datadoghq/pej/springbackend/controller/ApiController.java`**
+Enable cross-origin requests from the frontend:
+```java
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api")
+public class ApiController {
 
-### **Node.js Server**:
-- Install: `npm install`
-- Start: `npm start`
-
-### **Spring Boot Backend**:
-- Build: `./gradlew bootJar`
-- Run: `java -jar build/libs/spring-backend.jar`
+    @GetMapping("/data")
+    public ApiResponse getData() {
+        return new ApiResponse("Hello from Spring Boot API!");
+    }
+}
+```
 
 ---
+
+### **4. Bootsrap the application**
+
+Start the Datadog Agent:
+```bash
+docker run -d --name dd-agent-dogfood-jmx -v /var/run/docker.sock:/var/run/docker.sock:ro -v /proc/:/host/proc/:ro -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro -p 8126:8126 -p 8125:8125/udp -e DD_API_KEY=your_api_key -e DD_APM_ENABLED=true -e DD_APM_NON_LOCAL_TRAFFIC=true -e DD_PROCESS_AGENT_ENABLED=true -e DD_DOGSTATSD_NON_LOCAL_TRAFFIC="true" -e DD_LOG_LEVEL=debug -e DD_LOGS_ENABLED=true -e DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true -e DD_CONTAINER_EXCLUDE_LOGS="name:datadog-agent" gcr.io/datadoghq/agent:latest-jmx
+```
+
+Run the backend with Datadog APM in a terminal:
+
+```bash
+cd spring-backend
+java -javaagent:dd-java-agent.jar -Ddd.service=springbackend -Ddd.env=dev -Ddd.version=1.2 -Ddd.trace.sample.rate=1 -Ddd.logs.injection=true -Ddd.profiling.enabled=true -XX:FlightRecorderOptions=stackdepth=256 -Ddd.tags=env:dev -jar build/libs/spring-backend.jar
+```
+
+Run the frontend with Datadog APM in a second terminal:
+```bash
+cd ../node-server
+npm start
+```
+
+Run requests in a third terminal or use a browser using `http://localhost:3000` 
+```bash
+curl http://localhost:3000/api/data
+```
+
+You should receive this message:
+```bash
+TBD
+```
+
+### **5. Checking the results**
+
+TBD
+
+---
+
+## **Instrumentation for Dockerized Setup**
+
+### **Docker Compose**
+
+Update the `docker-compose.yml` file to include Datadog Agent, Node.js server, and Spring Boot backend:
+
+```yaml
+version: '3.8'
+
+services:
+  dd-agent:
+    container_name: dd-agent
+    image: gcr.io/datadoghq/agent:latest-jmx
+    environment:
+      - DD_API_KEY=your_api_key
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_PROCESS_AGENT_ENABLED=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC="true"
+      - DD_LOG_LEVEL=debug
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_CONTAINER_EXCLUDE_LOGS="name:datadog-agent"
+      - SD_JMX_ENABLE=true
+    ports:
+      - "8125:8125"
+      - "8126:8126"
+    volumes:
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - app
+
+  spring-backend:
+    build:
+      context: .
+      dockerfile: spring-backend/Dockerfile
+    container_name: spring-backend
+    environment:
+      - JAVA_TOOL_OPTIONS=-javaagent:/root/dd-java-agent.jar -Ddd.agent.host=dd-agent -Ddd.service=springbackend -Ddd.env=dev -Ddd.version=1.2 -Ddd.trace.sample.rate=1 -Ddd.logs.injection=true -Ddd.profiling.enabled=true -XX:FlightRecorderOptions=stackdepth=256 -Ddd.tags=env:dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./spring-backend/dd-java-agent.jar:/root/dd-java-agent.jar
+    networks:
+      - app
+
+  node-server:
+    build:
+      context: .
+      dockerfile: node-server/Dockerfile
+    container_name: node-server
+    ports:
+      - "3000:3000"
+    depends_on:
+      - spring-backend
+    environment:
+      - BACKEND_API=http://spring-backend:8080
+      - DD_AGENT_HOST=dd-agent
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
+    name: app
+```
+
+---
+
+### **Node.js Dockerfile**
+
+Ensure the `node-server` Dockerfile includes the `dd-trace` dependency (=> `node-server/package.json` file):
+
+```dockerfile
+# Stage 1: Build the Vue.js frontend
+FROM node:22 AS vue-builder
+
+# Set working directory for Vue.js build
+WORKDIR /app
+
+# Copy the Vue.js source code into the build context
+COPY vue-frontend/package*.json ./vue-frontend/
+RUN cd vue-frontend && npm install
+
+COPY vue-frontend/ ./vue-frontend/
+
+# Build Vue.js static files with the environment variable
+RUN cd vue-frontend && npm run build
+
+# Stage 2: Set up the Node.js server
+FROM node:22
+
+# Set working directory for Node.js server
+WORKDIR /app
+
+# Copy Node.js server dependencies (The package.json file include dd-trace)
+COPY node-server/package*.json ./
+RUN npm install
+
+# Copy the Node.js server code
+COPY node-server/ ./
+
+# Copy the Vue.js build output from the previous stage
+COPY --from=vue-builder /app/vue-frontend/dist ./dist
+
+# Expose the Node.js server port
+EXPOSE 3000
+
+# Start the Node.js server
+CMD ["npm", "start"]
+```
+
+
+### **Spring Boot Dockerfile**
+
+Nothing to do at the Dockerfile level as the instrumentation details are defined in the `docker-compose.yml` file. 
+
+---
+
+### **Testing the Setup**
+
+1. Start the entire stack:
+   ```bash
+   docker-compose up --build -d
+   ```
+2. Test the endpoint:
+   ```bash
+   curl http://localhost:3000/api/data
+   ```
 
