@@ -31,6 +31,6 @@ tasks {
         // BootJar task creates a runnable JAR with all dependencies
         archiveFileName.set("spring-backend.jar")
     }
-    
+
 }
 
