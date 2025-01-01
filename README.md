@@ -48,9 +48,11 @@ Add the Datadog RUM SDK using the **synchronous CDN method**:
 Rebuild the frontend:
 ```bash
 cd vue-frontend
+npm install
 npm run build
-cp -r dist ../node-server/dist
 cd ../node-server
+cp -r ../vue-frontend/dist ./dist
+npm install
 ```
 
 ---
@@ -140,23 +142,38 @@ app.listen(PORT, () => {
 #### **File: `spring-backend/src/main/java/com/datadoghq/pej/springbackend/controller/ApiController.java`**
 Enable cross-origin requests from the frontend:
 ```java
+package com.datadoghq.pej.springbackend.controller;
+
+import com.datadoghq.pej.springbackend.model.ApiResponse;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api")
 public class ApiController {
 
-    @GetMapping("/data")
-    public ApiResponse getData() {
-        return new ApiResponse("Hello from Spring Boot API!");
-    }
+   @GetMapping("/data")
+   public ApiResponse getData() {
+      return new ApiResponse("Hello from Spring Boot API!");
+   }
 }
 ```
+
+Build the artifact:
+```bash
+./gradlew build
+```
+
 
 ---
 
 ### **4. Bootsrap the application**
 
-Start the Datadog Agent:
+Start the Datadog Agent
+(Make sure to use a valid Datadog API key)
 ```bash
 docker run -d --name dd-agent-dogfood-jmx -v /var/run/docker.sock:/var/run/docker.sock:ro -v /proc/:/host/proc/:ro -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro -p 8126:8126 -p 8125:8125/udp -e DD_API_KEY=your_api_key -e DD_APM_ENABLED=true -e DD_APM_NON_LOCAL_TRAFFIC=true -e DD_PROCESS_AGENT_ENABLED=true -e DD_DOGSTATSD_NON_LOCAL_TRAFFIC="true" -e DD_LOG_LEVEL=debug -e DD_LOGS_ENABLED=true -e DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true -e DD_CONTAINER_EXCLUDE_LOGS="name:datadog-agent" gcr.io/datadoghq/agent:latest-jmx
 ```
