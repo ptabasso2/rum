@@ -10,9 +10,6 @@ RUN cd vue-frontend && npm install
 
 COPY vue-frontend/ ./vue-frontend/
 
-# Accept build argument for VUE_APP_API_URL
-ARG VUE_APP_API_URL
-
 # Build Vue.js static files with the environment variable
 RUN cd vue-frontend && npm run build
 
