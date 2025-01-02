@@ -222,7 +222,6 @@ spring-backend/
    ```json
    {"message": "Hello from Spring Boot API!"}
    ```
-
 ---
 
 ## **7. Common Issues and Fixes**
@@ -254,7 +253,6 @@ If any service fails to start because of port conflicts:
    ```javascript
    const PORT = 3001;
    ```
-
 ---
 
 ## **8. Summary of Commands**
@@ -262,15 +260,63 @@ If any service fails to start because of port conflicts:
 ### **Vue.js Frontend**:
 - Install: `npm install`
 - Build: `npm run build`
-- Serve Dev: `npm run serve`
 
 ### **Node.js Server**:
 - Install: `npm install`
 - Start: `npm start`
 
 ### **Spring Boot Backend**:
-- Build: `./gradlew bootJar`
+- Build: `./gradlew build`
 - Run: `java -jar build/libs/spring-backend.jar`
+
+---
+
+## **9. Instructions for dockerized setup**
+
+The `docker-compose.yml` file contains the definition for the two services that will be tested `Node.js server`, and `Spring Boot` backend:
+
+```yaml
+version: '3.8'
+
+services:
+  spring-backend:
+    build:
+      context: .
+      dockerfile: spring-backend/Dockerfile
+    container_name: spring-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - app
+
+  node-server:
+    build:
+      context: .
+      dockerfile: node-server/Dockerfile
+    container_name: node-server
+    ports:
+      - "3000:3000"
+    depends_on:
+      - spring-backend
+    environment:
+      - BACKEND_API=http://spring-backend:8080
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
+    name: app
+```
+---
+
+
+### **Bootstrapping the application**
+
+Start the entire stack:
+   ```bash
+   docker-compose up --build -d
+```
 
 ---
 
